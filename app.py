@@ -1,43 +1,50 @@
 from flask import Flask, request, jsonify
-from dotenv import load_dotenv
-import openai
+from openai import OpenAI  # Correct modern SDK import
 import os
+from dotenv import load_dotenv
+from flask_cors import CORS
 
+# Load env variables from .env
 load_dotenv()
-openai.api_key = os.getenv("charAIds Key")
 
+# Create Flask app
 app = Flask(__name__)
+CORS(app)  # Allow cross-origin requests
+
+# Correct env variable key name (should match .env file)
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)  # Instantiate once
 
 
-@app.route("/generate-charades", methods=["POST"])
-def generate_charades():
+@app.route("/generate-list", methods=["POST"])
+def generate_list():
     data = request.get_json()
-    category = data.get("category", "")
+    category = data.get("category", "animals")
+    count = data.get("count", 10)
 
-    if not category:
-        return jsonify({"error": "Category is required"}), 400
-
-    prompt = (
-        f"Give me a list of 30 charades "
-        f"for the category '{category}'. Format it as a plain list with no numbering."
-    )
+    prompt = f"Give me a list of {count} unique {category}. Return only the items, no explanations or formatting."
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.9,
-            max_tokens=100,
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that generates game items.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.7,
         )
 
-        charades_raw = response["choices"][0]["message"]["content"]
-        charades_list = [
-            line.strip("-• ").strip()
-            for line in charades_raw.split("\n")
+        raw_output = response.choices[0].message.content
+
+        items = [
+            line.strip("1234567890). ").strip()
+            for line in raw_output.splitlines()
             if line.strip()
         ]
-
-        return jsonify({"charades": charades_list})
+        return jsonify({"items": items})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
