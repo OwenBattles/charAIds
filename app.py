@@ -22,8 +22,7 @@ def generate_list():
     category = data.get("category", "animals")
     count = data.get("count", 10)
 
-    prompt = f"Give me a list of {count} unique {category}. Return only the items, no explanations or formatting."
-
+    prompt = f"Give me a list of {count} unique real-world items from category: {category}. The items should be random in theme but all should exist in the real world. Return them in a random order with no explanations or formatting."
     try:
         response = client.chat.completions.create(
             model="gpt-4",
@@ -34,7 +33,10 @@ def generate_list():
                 },
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.7,
+            temperature=1.0,  
+            top_p=0.95,       
+            presence_penalty=1.0, 
+            frequency_penalty=0.5, 
         )
 
         raw_output = response.choices[0].message.content
