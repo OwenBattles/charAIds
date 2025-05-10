@@ -22,10 +22,11 @@ def generate_list():
     category = data.get("category", "animals")
     count = data.get("count", 10)
 
-    prompt = f"Give me a list of {count} unique real-world items from category: {category}. The items should be random in theme but all should exist in the real world. Return them in a random order with no explanations or formatting."
+    prompt = f"Give me a list of {count} unique real-world items from category: {category}. The items should be random in theme but all should exist in the real world. Return them in a random order with no explanations or formatting. Output every entry on new line"
+
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4", 
             messages=[
                 {
                     "role": "system",
@@ -39,13 +40,18 @@ def generate_list():
             frequency_penalty=0.5, 
         )
 
-        raw_output = response.choices[0].message.content
+        raw_output = response.choices[0].message.content.strip()
 
-        items = [
-            line.strip("1234567890). ").strip()
-            for line in raw_output.splitlines()
-            if line.strip()
-        ]
+        # Primary strategy: split by newline
+        items = raw_output.splitlines()
+
+        # Fallback only if clearly comma-separated AND single line
+        if len(items) == 1 and ',' in items[0]:
+            items = [item.strip() for item in items[0].split(',')]
+
+        # Final cleanup
+        items = [item.strip("1234567890). ").strip() for item in items if item.strip()]
+
         return jsonify({"items": items})
 
     except Exception as e:
