@@ -22,7 +22,7 @@ def generate_list():
     category = data.get("category", "animals")
     count = data.get("count", 10)
 
-    prompt = f"Make a heads-up game with {count} unique singular nouns from category: {category}. Use the least amount of description possible. The items should be in a random order. Return them with every entry on a new line."
+    prompt = f"Make a heads-up game with {count} unique singular nouns from category: {category}. Use the least amount of description possible. The items should be in a random order. Return them with every entry on a new line and no excess text."
 
     try:
         response = client.chat.completions.create(
